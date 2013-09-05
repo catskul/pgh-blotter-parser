@@ -32,64 +32,88 @@ multifield_set = {
               'Description' }        
         
 
-@coroutine
-def grabAndFilter():
-    line = (yield)
-    if line.strip().startswith("PITTSBURGH BUREAU OF POLICE"):
-        while not (yield).strip().startswith("DISCLAIMER"):
-            print "passing"
-            pass
-        while (yield).strip() != "":
-            print "passing"
-            pass
-    return line
-        
-@coroutine
-def processBlotter():
-#     blotterFile = open( "blotter_tuesday.txt", 'r' )
-    line=""
-    date=""
-    zone=""
-    record={}
-    
-    while True:
-        line = (yield).strip()
-        if not line:
-#             print "NOT LINE"
-            continue
-#         print "received [" + line + "]"
-        
 
+
+
+class BlotterProcessor:   
+    zone = ""
+    date = ""
+         
+    @coroutine
+    def processDocument(self):
+    #     blotterFile = open( "blotter_tuesday.txt", 'r' )
+        processContentCoro = self.processContent()
+        
+        while True:
+            line = (yield)
+            #process header
+            if line:
+                line = line.strip()
+                if line.startswith("PITTSBURGH BUREAU OF POLICE"):
+                    print "passing [" + line + "]" 
+                    continue
+                elif line.startswith("Sorted by:"):
+                    print "passing [" + line + "]" 
+                    line = (yield)
+                    continue
+                elif line.startswith("DISCLAIMER"):
+                    print "passing [" + line + "]" 
+                    line = (yield)
+                    print "passing [" + line + "]" 
+                    continue
+    #             elif line.startswith("Incident Blotter"):
+    #                 print "passing [" + line + "]" 
+    #                 continue
+                elif line.startswith("Incident Blotter"):
+                    line  = (yield)
+                    self.date = line
+                
+                elif line.startswith("Zone"):
+        #             zone  = line.strip()
+                    print "Pre zone-line: " + line 
+                    self.zone = (yield)
+                    print "Zone line: " + self.zone                  
+
+            else:
+                line = ""
+                
+            processContentCoro.send(line)        
             
-        if line.startswith("Zone"):
-#             zone  = line.strip()
-            zone = (yield).strip()
+    @coroutine
+    def processContent(self):
+        line=""
+        record={}
+        
+        while True:
+            line = (yield)
+            if not line:
+#                 print "NOT LINE"
+                continue
+    #         print "received [" + line + "]"
             
-        elif line.startswith("Incident Blotter"):
-            line  = (yield).strip()
-            date = line
-            
-        elif line in field_set :
-            field = line.strip()
-            record[field] = (yield)
-            
-        elif line in multifield_set:
-            field = line.strip()
-            record[field] = ""    
-            data = (yield).strip()
-            while True:
-                data = (yield).strip()
-                if data == "":
-                    break
-                record[field] += "\n[" + data + "]"    
-            
-            if field == "Description":
-                sys.stdout.write("zone=%s\n"%(zone) )    
-                sys.stdout.write("date=%s\n"%(date) )    
-                for key in record:
-                    sys.stdout.write("%s=%s\n"%(key,record[key]) )
-                print
-                record = {}
+                
+            elif line in field_set :
+                field = line.strip()
+                record[field] = (yield)
+                
+            elif line in multifield_set:
+                field = line.strip()
+                record[field] = ""    
+                data = (yield)
+                while True:
+                    data = (yield)
+                    if data == "":
+                        break
+                    record[field] += "\n\t[" + data + "]"    
+                
+                if field == "Description":
+                    sys.stdout.write("zone=%s\n"%(self.zone) )    
+                    sys.stdout.write("date=%s\n"%(self.date) )    
+                    for key in record:
+                        sys.stdout.write("%s=%s\n"%(key,record[key]) )
+                    print
+                    print
+                    record = {}
 
 
 class TextLineConverter(PDFConverter):
@@ -99,7 +123,8 @@ class TextLineConverter(PDFConverter):
         PDFConverter.__init__(self, rsrcmgr, outfp, codec=codec, pageno=pageno, laparams=laparams)
         self.showpageno = showpageno
         self.imagewriter = imagewriter
-        self.coro = processBlotter()
+        self.blotterProcessor = BlotterProcessor()
+        self.coro = self.blotterProcessor.processDocument()
         return
 
     line=""
@@ -188,7 +213,7 @@ def main(argv=None):
     try:
         try:
             opts, args = getopt.getopt(argv[1:], "h", ["help"])
-#             processBlotter()
+#             processDocument()
             parsePdf( "blotter_tuesday.pdf" )
             
         except getopt.error, msg:
