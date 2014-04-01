@@ -21,7 +21,7 @@ def doit():
         
 field_set = { 'Report Name',
               'Incident Time',
-              'Location of Occurence',
+              'Location of Occurrence',
               'Neighborhood',
               'Incident',
               'Age',
