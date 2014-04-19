@@ -54,13 +54,6 @@ def coroutine(func):
     return start
 
 
-@coroutine
-def doit():
-    while True:
-        line = (yield)
-        print "HA: " + line
-
-
 field_set = {'Report Name',
              'Incident Time',
              'Location of Occurrence',
