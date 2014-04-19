@@ -61,11 +61,13 @@ field_set = {
     'Neighborhood',
     'Incident',
     'Age',
-    'Gender'}
+    'Gender'
+    }
 
 multifield_set = {
     'Section',
-    'Description'}
+    'Description'
+    }
     
 discard_set = {
     'PITTSBURGH BUREAU OF POLICE' : 1,
@@ -92,7 +94,7 @@ class BlotterProcessor:
     @coroutine
     def processDocument(self):
     #     blotterFile = open( "blotter_tuesday.txt", 'r' )
-        processContentCoro = self.processContent()
+        processContentCoro = self.processLine()
 
         while True:
             line = (yield)
@@ -126,8 +128,8 @@ class BlotterProcessor:
             processContentCoro.send(line)
 
     @coroutine
-    def processContent(self):
-        line = ""
+    def processLine(self):
+        line   = ""
         record = {}
         storeDataCoro = self.storeData()
 
@@ -166,6 +168,7 @@ class BlotterProcessor:
             print
             print record
             print json.dumps(record, sort_keys=True, indent=4, separators=(',', ': '))
+
 
 
 class TextLineConverter(PDFConverter):
