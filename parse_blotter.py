@@ -268,9 +268,11 @@ class BlotterProcessor():
 #                        print "attaching to %s parse failures %s"%(field,parse_failures[idx])
                         idx += 1
                 
-            print record
-            print json.dumps(record, sort_keys=True, indent=4, separators=(',', ': '))
-            print "Count: ",count
+            #print record
+            sys.stderr.write('.')
+            sys.stderr.flush()
+            self.outfile.write( json.dumps(record, sort_keys=True, indent=4, separators=(',', ': ')) + '\n' )
+            #print "Count: ",count
             count += 1
 
 
@@ -324,7 +326,6 @@ class TextLineConverter(PDFConverter):
 
 
 def parsePdf(ifilename,ofilename):
-
     password   = ''
     pagenos    = set()
     maxpages   = 0
@@ -379,23 +380,21 @@ def main(argv=None):
         argv = sys.argv
     try:
         try:
-            print argv
             opts, args = getopt.getopt(argv[1:], "hi:o:", ["ifile=", "ofile="])
-            print opts, args
             
             inputfile  = None
             outputfile = None
             for opt, arg in opts:
-                print opt, arg
                 if opt == '-h':
-                    print '%s -i <inputfile> -o <outputfile>'%argv[0]
+                    sys.stderr.write( '%s -i <inputfile> -o <outputfile>\n'%argv[0] )
                     sys.exit()
                 elif opt in ("-i", "--ifile"):
                     inputfile = arg
                 elif opt in ("-o", "--ofile"):
                     outputfile = arg
-            print 'Input file is "', inputfile
-            print 'Output file is "', outputfile            
+                    
+            sys.stderr.write( 'Input file is %s\n'%inputfile   )
+            sys.stderr.write( 'Output file is %s\n'%outputfile )          
                         
             parsePdf(inputfile,outputfile)
 
@@ -403,8 +402,8 @@ def main(argv=None):
             raise Usage(msg)
 
     except Usage, err:
-        print >>sys.stderr, err.msg
-        print >>sys.stderr, "for help use --help"
+        sys.stderr.write( err.msg + "\n" )
+        sys.stderr.write( "for help use --help" )
         return 2
 
 if __name__ == "__main__":
