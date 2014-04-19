@@ -219,13 +219,29 @@ def main(argv=None):
         argv = sys.argv
     try:
         try:
-            opts, args = getopt.getopt(argv[1:], "h", ["help"])
-#             processDocument()
-            parsePdf("blotter_tuesday.pdf")
+            print argv
+            opts, args = getopt.getopt(argv[1:], "hi:o:", ["ifile=", "ofile="])
+            print opts, args
+            
+            inputfile  = None
+            outputfile = None
+            for opt, arg in opts:
+                print opt, arg
+                if opt == '-h':
+                    print '%s -i <inputfile> -o <outputfile>'%argv[0]
+                    sys.exit()
+                elif opt in ("-i", "--ifile"):
+                    inputfile = arg
+                elif opt in ("-o", "--ofile"):
+                    outputfile = arg
+            print 'Input file is "', inputfile
+            print 'Output file is "', outputfile            
+                        
+            parsePdf(inputfile,outputfile)
 
         except getopt.error, msg:
             raise Usage(msg)
-        # more code, unchanged
+
     except Usage, err:
         print >>sys.stderr, err.msg
         print >>sys.stderr, "for help use --help"
