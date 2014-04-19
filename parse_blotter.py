@@ -90,7 +90,9 @@ persistent_field_dict = {
                    
 
 
-class BlotterProcessor:
+class BlotterProcessor():
+
+    outfile           = None
     persistent_fields = {}
     record            = {}
     last_record       = None
@@ -99,7 +101,10 @@ class BlotterProcessor:
     storeDataCoro     = None
     processFieldCoro = None #self.processField(record,None)
     field = None    
-
+    
+    def __init__(self,outfile):
+        self.outfile = outfile
+    
     @coroutine
     def processDocument(self):
     #     blotterFile = open( "blotter_tuesday.txt", 'r' )
@@ -276,7 +281,7 @@ class TextLineConverter(PDFConverter):
         PDFConverter.__init__(self, rsrcmgr, outfp, codec=codec, pageno=pageno, laparams=laparams)
         self.showpageno       = showpageno
         self.imagewriter      = imagewriter
-        self.blotterProcessor = BlotterProcessor()
+        self.blotterProcessor = BlotterProcessor(outfp)
         self.coro             = self.blotterProcessor.processDocument()
         return
 
