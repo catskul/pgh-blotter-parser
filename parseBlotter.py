@@ -68,6 +68,9 @@ multifield_set = {
     'Section',
     'Description'
     }
+
+start_field    = 'Report Name'
+terminal_field = 'Description'
     
 discard_set = {
     'PITTSBURGH BUREAU OF POLICE' : 1,
@@ -80,7 +83,6 @@ class DiscardFound(Exception):
     pass
 
     
-terminal_field = "Description"
                
 persistent_field_dict = {
     'Zone'             : 'zone',
@@ -90,6 +92,13 @@ persistent_field_dict = {
 
 class BlotterProcessor:
     persistent_fields = {}
+    record            = {}
+    last_record       = None
+    empty_fields      = []
+    parse_failures    = []
+    storeDataCoro     = None
+    processFieldCoro = None #self.processField(record,None)
+    field = None    
 
     @coroutine
     def processDocument(self):
@@ -105,11 +114,11 @@ class BlotterProcessor:
                 try:
                     for discard_string in discard_set:
                         if line.startswith( discard_string ):
-                            print "discarding [" + line + "]"
+                            #print "discarding [" + line + "]"
                         
                             for x in range(1,discard_set[discard_string]):
                                 line = (yield)
-                                print "discarding [" + line + "]"
+                                #print "discarding [" + line + "]"
                             
                             raise DiscardFound() # have to use this because breaking out
                                                  # functions is hard in coroutines
@@ -125,83 +134,111 @@ class BlotterProcessor:
             else:
                 line = ""
 
-            print "passing line: ", line
+            #print "passing line: ", line
             processContentCoro.send(line)
 
     @coroutine
     def processLine(self):
         line   = ""
-        record = {}
-        last_record    = None
-        empty_fields   = []
-        parse_failures = []
-        storeDataCoro = self.storeData()
+        self.storeDataCoro = self.storeData()
 
         while True:
             line  = (yield)
-            field = ""
-            if not line:
-                print "NOT LINE"
+            
+            try:
+                if not line:
+                    #print "NOT LINE"
+                    #continue
+                    line = ""
+
+                if line in field_set or line in multifield_set:
+                    field = line.strip()
+                    
+                    if (self.field in self.record 
+                          and (self.record[self.field] == "" or self.record[self.field] == [] ) 
+                          and self.field not in self.empty_fields
+                        ):
+                        #print "Adding [%s] to empty field list"%self.field
+                        self.empty_fields.append( self.field )
+                    
+                    #print "found field: [%s]"%field 
+                    self.field = field                        
+
+                    if self.field == start_field and len(self.record) > 0:
+                        self.record['zone'] = self.persistent_fields['zone']
+                        self.record['date'] = self.persistent_fields['date']                
+                        self.storeDataCoro.send((self.record,self.empty_fields,self.parse_failures))
+                        self.last_record  = self.record
+                        self.record       = {}
+                        self.empty_fields = []
+                        self.parse_failures = []
+                        
+                    self.processFieldCoro = self.processField(self.record, self.field)
+                else:
+                    self.processFieldCoro.send(line)
+
                 continue
-    #         print "received [" + line + "]"
 
-            elif line in field_set:
-                field = line.strip()
-                print "found field: [%s]"%field                
-                record[field] = ""
-                line = (yield)
-                while line != "":
-                    record[field] += line  
-                    print "storing: [%s]"%line           
-                    line = (yield)
+            except (StopIteration, AttributeError):
+                if line != "":
+                    #print "Failed to parse: [%s]"%line
+                    self.parse_failures.append( line )
+                    while True:
+                        line = (yield)
+                        #print "Failed to parse: [%s]"%line
+                        if line == "":
+                            #print self.parse_failures[-1]
+                            break
+                        if not isinstance(self.parse_failures[-1],list):
+                            self.parse_failures[-1] = [ self.parse_failures[-1], ]
+                        else:
+                            self.parse_failures[-1].append(line)
+                    continue
+                
+                
+            if self.field == terminal_field and (self.record[self.field] != "" and self.record[self.field] != [] ):                                   
+                self.record['zone'] = self.persistent_fields['zone']
+                self.record['date'] = self.persistent_fields['date']                
+                self.storeDataCoro.send((self.record,self.empty_fields,self.parse_failures))
+                self.last_record  = self.record
+                self.record       = {}
+                self.empty_fields = []
+                self.parse_failures = []
+                self.field = None
+                self.processFieldCoro = None #self.processField(record, None)
 
-            elif line in multifield_set:
-                field         = line.strip()
-                print "found field: [%s]"%field
-                record[field] = []
-                line          = (yield) # consume empty line
-                print "consuming empty line: [%s]"%line
-                while True:
-                    line = (yield)
-                    print "storing: [%s]"%line
-                    if line == "":
-                        break
-                    record[field].append( line )
-            else:
-                print "Failed to parse: [%s]"%line
-                parse_failures.append( line )
-                while True:
-                    line = (yield)
-                    print "Failed to parse: [%s]"%line
-                    if line == "":
-                        print parse_failures[-1]
-                        break
-                    if not isinstance(parse_failures[-1],list):
-                        parse_failures[-1] = [ parse_failures[-1], ]
-                    else:
-                        parse_failures[-1].append(line)
-                continue
-                
-
-            if record[field] == "":
-                empty_fields.append( field )
-                
-            if field == terminal_field:                   
-                record['zone'] = self.persistent_fields['zone']
-                record['date'] = self.persistent_fields['date']                
-                storeDataCoro.send((record,empty_fields,parse_failures))
-                last_record  = record
-                record       = {}
-                empty_fields = []
-                parse_failures = []
-                
     @coroutine
-    def storeField(self):
+    def processField(self,record,field):
+
+        if field in field_set:           
+            record[field] = ""
+            line = (yield)
+            while line != "":
+                record[field] += line  
+                #print "storing: %s:[%s]"%(field,line)           
+                line = (yield)
+            else:
+                #print "discarding line [%s]"%line
+                pass
+
+        elif field in multifield_set:
+            record[field] = []
+            line          = (yield) # consume empty line
+            #print "consuming empty line: [%s]"%line
+            while True:
+                line = (yield)
+                #print "storing: %s:[%s]"%(field,line)
+                if line == "":
+                    break
+                record[field].append( line )
+                
+        raise StopIteration()
         
                     
     @coroutine
     def storeData(self):
         import json
+        count = 0
         last_record       = None
         empty_fields      = None
         last_empty_fields = None
@@ -209,22 +246,27 @@ class BlotterProcessor:
         while True:
             record, empty_fields, parse_failures = (yield)
             if parse_failures and empty_fields and len( parse_failures ) != 0 and len( empty_fields ) != 0:
-                print "Attempting to fix empty record fields: [%s]\n with parse failures: [%s]"%(empty_fields,parse_failures)
+#                print "Attempting to fix empty record fields: [%s]\n with parse failures: [%s]"%(empty_fields,parse_failures)
                 idx = 0
                 for field in empty_fields:
-                    print "Treating field [%s]"%(field)
+#                    print "Treating field [%s]"%(field)
                     if idx < len( parse_failures ):
                         if field == "Age" and len( parse_failures[idx] ) > 2 :
                             continue
                         if field == "Gender" and len( parse_failures[idx] ) > 1 :
                             continue
                         
-                        record[field] = parse_failures[idx]
-                        print "attaching to %s parse failures %s"%(field,parse_failures[idx])
+                        if field in multifield_set and not isinstance(parse_failures[idx],list):
+                            record[field] = [ parse_failures[idx] ]
+                        else:
+                            record[field] = parse_failures[idx]
+#                        print "attaching to %s parse failures %s"%(field,parse_failures[idx])
                         idx += 1
                 
             print record
             print json.dumps(record, sort_keys=True, indent=4, separators=(',', ': '))
+            print "Count: ",count
+            count += 1
 
 
 
