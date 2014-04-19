@@ -32,9 +32,17 @@
 
 import sys
 import getopt
-from pdfminer.converter import XMLConverter, HTMLConverter, TextConverter, PDFConverter, LTContainer, LTText, LTTextBox, LTImage
-from pdfminer.layout import LAParams
-from pdfminer.pdfinterp import PDFResourceManager, PDFPageInterpreter, process_pdf
+
+from pdfminer.converter import TextConverter 
+from pdfminer.converter import PDFConverter 
+from pdfminer.converter import LTContainer
+from pdfminer.converter import LTText
+from pdfminer.converter import LTTextBox 
+from pdfminer.converter import LTImage
+from pdfminer.layout    import LAParams
+from pdfminer.pdfinterp import PDFResourceManager
+from pdfminer.pdfinterp import PDFPageInterpreter
+from pdfminer.pdfinterp import process_pdf
 
 
 def coroutine(func):
