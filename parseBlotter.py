@@ -125,47 +125,104 @@ class BlotterProcessor:
             else:
                 line = ""
 
+            print "passing line: ", line
             processContentCoro.send(line)
 
     @coroutine
     def processLine(self):
         line   = ""
         record = {}
+        last_record    = None
+        empty_fields   = []
+        parse_failures = []
         storeDataCoro = self.storeData()
 
         while True:
-            line = (yield)
+            line  = (yield)
+            field = ""
             if not line:
-#                 print "NOT LINE"
+                print "NOT LINE"
                 continue
     #         print "received [" + line + "]"
 
             elif line in field_set:
                 field = line.strip()
-                record[field] = (yield)
+                print "found field: [%s]"%field                
+                record[field] = ""
+                line = (yield)
+                while line != "":
+                    record[field] += line  
+                    print "storing: [%s]"%line           
+                    line = (yield)
 
             elif line in multifield_set:
                 field         = line.strip()
+                print "found field: [%s]"%field
                 record[field] = []
-                data          = (yield)
+                line          = (yield) # consume empty line
+                print "consuming empty line: [%s]"%line
                 while True:
-                    data = (yield)
-                    if data == "":
+                    line = (yield)
+                    print "storing: [%s]"%line
+                    if line == "":
                         break
-                    record[field].append( data )
+                    record[field].append( line )
+            else:
+                print "Failed to parse: [%s]"%line
+                parse_failures.append( line )
+                while True:
+                    line = (yield)
+                    print "Failed to parse: [%s]"%line
+                    if line == "":
+                        print parse_failures[-1]
+                        break
+                    if not isinstance(parse_failures[-1],list):
+                        parse_failures[-1] = [ parse_failures[-1], ]
+                    else:
+                        parse_failures[-1].append(line)
+                continue
+                
 
-                if field == terminal_field:                   
-                    record['zone'] = self.zone
-                    record['date'] = self.date                    
-                    storeDataCoro.send(record)
-                    record = {}
+            if record[field] == "":
+                empty_fields.append( field )
+                
+            if field == terminal_field:                   
+                record['zone'] = self.persistent_fields['zone']
+                record['date'] = self.persistent_fields['date']                
+                storeDataCoro.send((record,empty_fields,parse_failures))
+                last_record  = record
+                record       = {}
+                empty_fields = []
+                parse_failures = []
+                
+    @coroutine
+    def storeField(self):
+        
                     
     @coroutine
     def storeData(self):
         import json
+        last_record       = None
+        empty_fields      = None
+        last_empty_fields = None
+        parse_failures    = None
         while True:
-            record = (yield)
-            print
+            record, empty_fields, parse_failures = (yield)
+            if parse_failures and empty_fields and len( parse_failures ) != 0 and len( empty_fields ) != 0:
+                print "Attempting to fix empty record fields: [%s]\n with parse failures: [%s]"%(empty_fields,parse_failures)
+                idx = 0
+                for field in empty_fields:
+                    print "Treating field [%s]"%(field)
+                    if idx < len( parse_failures ):
+                        if field == "Age" and len( parse_failures[idx] ) > 2 :
+                            continue
+                        if field == "Gender" and len( parse_failures[idx] ) > 1 :
+                            continue
+                        
+                        record[field] = parse_failures[idx]
+                        print "attaching to %s parse failures %s"%(field,parse_failures[idx])
+                        idx += 1
+                
             print record
             print json.dumps(record, sort_keys=True, indent=4, separators=(',', ': '))
 
