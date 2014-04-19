@@ -54,17 +54,27 @@ def coroutine(func):
     return start
 
 
-field_set = {'Report Name',
-             'Incident Time',
-             'Location of Occurrence',
-             'Neighborhood',
-             'Incident',
-             'Age',
-             'Gender'}
+field_set = {
+    'Report Name',
+    'Incident Time',
+    'Location of Occurrence',
+    'Neighborhood',
+    'Incident',
+    'Age',
+    'Gender'}
 
 multifield_set = {
     'Section',
     'Description'}
+    
+discard_set = {
+    'PITTSBURGH BUREAU OF POLICE',
+    'Sorted by:',
+    'DISCLAIMER', }
+    
+terminal_field = "Description"
+               
+               
 
 
 class BlotterProcessor:
@@ -149,14 +159,12 @@ class BlotterProcessor:
 
 class TextLineConverter(PDFConverter):
 
-    def __init__(self, rsrcmgr, outfp, codec='utf-8', pageno=1, laparams=None,
-                 showpageno=False, imagewriter=None):
-        PDFConverter.__init__(
-            self, rsrcmgr, outfp, codec=codec, pageno=pageno, laparams=laparams)
-        self.showpageno = showpageno
-        self.imagewriter = imagewriter
+    def __init__(self, rsrcmgr, outfp, codec='utf-8', pageno=1, laparams=None, showpageno=False, imagewriter=None):
+        PDFConverter.__init__(self, rsrcmgr, outfp, codec=codec, pageno=pageno, laparams=laparams)
+        self.showpageno       = showpageno
+        self.imagewriter      = imagewriter
         self.blotterProcessor = BlotterProcessor()
-        self.coro = self.blotterProcessor.processDocument()
+        self.coro             = self.blotterProcessor.processDocument()
         return
 
     line = ""
