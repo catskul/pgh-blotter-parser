@@ -68,18 +68,26 @@ multifield_set = {
     'Description'}
     
 discard_set = {
-    'PITTSBURGH BUREAU OF POLICE',
-    'Sorted by:',
-    'DISCLAIMER', }
+    'PITTSBURGH BUREAU OF POLICE' : 1,
+    'Sorted by:' : 2,
+    'DISCLAIMER' : 2,
+    'Page' : 2,
+    }
+    
+class DiscardFound(Exception):
+    pass
+
     
 terminal_field = "Description"
                
-               
+persistent_field_dict = {
+    'Zone'             : 'zone',
+    'Incident Blotter' : 'date', }
+                   
 
 
 class BlotterProcessor:
-    zone = ""
-    date = ""
+    persistent_fields = {}
 
     @coroutine
     def processDocument(self):
@@ -91,31 +99,27 @@ class BlotterProcessor:
             # process header
             if line:
                 line = line.strip()
-                if line.startswith("PITTSBURGH BUREAU OF POLICE"):
-                    print "passing [" + line + "]"
-                    continue
-                elif line.startswith("Sorted by:"):
-                    print "passing [" + line + "]"
-                    line = (yield)
-                    continue
-                elif line.startswith("DISCLAIMER"):
-                    print "passing [" + line + "]"
-                    line = (yield)
-                    print "passing [" + line + "]"
-                    continue
-    #             elif line.startswith("Incident Blotter"):
-    #                 print "passing [" + line + "]"
-    #                 continue
-                elif line.startswith("Incident Blotter"):
-                    line = (yield)
-                    self.date = line
+                
+                try:
+                    for discard_string in discard_set:
+                        if line.startswith( discard_string ):
+                            print "discarding [" + line + "]"
+                        
+                            for x in range(1,discard_set[discard_string]):
+                                line = (yield)
+                                print "discarding [" + line + "]"
+                            
+                            raise DiscardFound() # have to use this because breaking out
+                                                 # functions is hard in coroutines
+                    for key in persistent_field_dict:
+                        if line.startswith( key ):
+                            line = (yield)
+                            self.persistent_fields[persistent_field_dict[key]] = line
+                            
+                            raise DiscardFound()
 
-                elif line.startswith("Zone"):
-        #             zone  = line.strip()
-                    print "Pre zone-line: " + line
-                    self.zone = (yield)
-                    print "Zone line: " + self.zone
-
+                except DiscardFound, e:
+                    continue                    
             else:
                 line = ""
 
