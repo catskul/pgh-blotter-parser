@@ -14,27 +14,30 @@
 #                hard coded (bad idea) path
 # Copyright:   (c) Andy Somerville 2014
 # Licence:     <MIT licensed (free to copy derive for any reason as long as the copyright info is preserved).>
-#-------------------------------------------------------------------------------
+#-------------------------------------------------------------------------
 
 
-import sys, getopt
+import sys
+import getopt
 from pdfminer.converter import XMLConverter, HTMLConverter, TextConverter, PDFConverter, LTContainer, LTText, LTTextBox, LTImage
 from pdfminer.layout import LAParams
 from pdfminer.pdfinterp import PDFResourceManager, PDFPageInterpreter
 from pdfminer.pdfpage import PDFPage
-#from pdfminer.pdfinterp import process_pdf
+# from pdfminer.pdfinterp import process_pdf
 
-#def main():
+# def main():
 #    pass
-#if __name__ =='__main__':
+# if __name__ =='__main__':
 #    main()
 
+
 def coroutine(func):
-    def start(*args,**kwargs):
-        cr = func(*args,**kwargs)
+    def start(*args, **kwargs):
+        cr = func(*args, **kwargs)
         cr.next()
         return cr
     return start
+
 
 @coroutine
 def doit():
@@ -43,18 +46,17 @@ def doit():
         print "HA: " + line
 
 
-field_set = { 'Report Name',
-              'Incident Time',
-              'Location of Occurrence',
-              'Neighborhood',
-              'Incident',
-              'Age',
-              'Gender' }
+field_set = {'Report Name',
+             'Incident Time',
+             'Location of Occurrence',
+             'Neighborhood',
+             'Incident',
+             'Age',
+             'Gender'}
 
 multifield_set = {
-              'Section',
-              'Description' }
-
+    'Section',
+    'Description'}
 
 
 class BlotterProcessor:
@@ -68,9 +70,9 @@ class BlotterProcessor:
 
         while True:
             line = (yield)
-            #process header
+            # process header
             if line:
-                #line = line.strip()
+                # line = line.strip()
                 if line.startswith("PITTSBURGH BUREAU OF POLICE"):
                     print "passing> [" + line + "]"
                     continue
@@ -87,11 +89,11 @@ class BlotterProcessor:
     #                 print "passing [" + line + "]"
     #                 continue
                 elif line.startswith("Incident Blotter"):
-                    line  = (yield)
+                    line = (yield)
                     self.date = line
                     continue
 
-                elif ("Zone 1") in line :
+                elif ("Zone 1") in line:
         #             zone  = line.strip()
                     print "Pre zone-line: " + line
                     self.zone = (yield)
@@ -105,8 +107,8 @@ class BlotterProcessor:
 
     @coroutine
     def processContent(self):
-        line=""
-        record={}
+        line = ""
+        record = {}
 
         while True:
             line = (yield)
@@ -115,8 +117,7 @@ class BlotterProcessor:
                 continue
     #         print "received [" + line + "]"
 
-
-            elif line in field_set :
+            elif line in field_set:
                 field = line.strip()
                 record[field] = (yield)
 
@@ -131,10 +132,10 @@ class BlotterProcessor:
                     record[field] += "\n\t[" + data + "]"
 
                 if field == "Description":
-                    sys.stdout.write("zone=%s\n"%(self.zone) )
-                    sys.stdout.write("date=%s\n"%(self.date) )
+                    sys.stdout.write("zone=%s\n" % (self.zone))
+                    sys.stdout.write("date=%s\n" % (self.date))
                     for key in record:
-                        sys.stdout.write("%s=%s\n"%(key,record[key]) )
+                        sys.stdout.write("%s=%s\n" % (key, record[key]))
                     print
                     print
                     record = {}
@@ -144,25 +145,26 @@ class TextLineConverter(PDFConverter):
 
     def __init__(self, rsrcmgr, outfp, codec='utf-8', pageno=1, laparams=None,
                  showpageno=False, imagewriter=None):
-        PDFConverter.__init__(self, rsrcmgr, outfp, codec=codec, pageno=pageno, laparams=laparams)
+        PDFConverter.__init__(
+            self, rsrcmgr, outfp, codec=codec, pageno=pageno, laparams=laparams)
         self.showpageno = showpageno
         self.imagewriter = imagewriter
         self.blotterProcessor = BlotterProcessor()
         self.coro = self.blotterProcessor.processDocument()
         return
 
-    line=""
+    line = ""
 
     def write_text(self, text):
-         self.outfp.write(text.encode(self.codec, 'ignore'))
-         print "{" + text + "}"
-         if text == "\n":
-                     print "sending [" + self.line + "]"
-                     self.coro.send(self.line)
-                     self.line=""
-         else:
-                self.line += text
-                return
+        self.outfp.write(text.encode(self.codec, 'ignore'))
+        print "{" + text + "}"
+        if text == "\n":
+            print "sending [" + self.line + "]"
+            self.coro.send(self.line)
+            self.line = ""
+        else:
+            self.line += text
+            return
 
     def receive_layout(self, ltpage):
         def render(item):
@@ -189,56 +191,59 @@ class TextLineConverter(PDFConverter):
         return
 
 
+def parsePdf(fname, outfile):
 
-
-def parsePdf(fname,outfile):
-
-      password = ''
-      pagenos = set()
-      maxpages = 0
+    password = ''
+    pagenos = set()
+    maxpages = 0
     # output option
-    #outfile = "C:\\scripts\\"+outputfile
-      print "[" + outfile + "]"
-      outtype = 'text'
-      layoutmode = 'normal'
-      codec = 'utf-8'
-      caching = True
-      laparams = LAParams()
+    # outfile = "C:\\scripts\\"+outputfile
+    print "[" + outfile + "]"
+    outtype = 'text'
+    layoutmode = 'normal'
+    codec = 'utf-8'
+    caching = True
+    laparams = LAParams()
 
-      rsrcmgr = PDFResourceManager(caching=caching)
-      if not outtype:
+    rsrcmgr = PDFResourceManager(caching=caching)
+    if not outtype:
         outtype = 'text'
 
-      if outfile:
+    if outfile:
         outfp = file(outfile, 'w+')
-      else:
+    else:
         outfp = sys.stdout
-      if outtype == 'text':
-        device = TextLineConverter(rsrcmgr, outfp, codec=codec, laparams=laparams )
-      else:
+    if outtype == 'text':
+        device = TextLineConverter(
+            rsrcmgr, outfp, codec=codec, laparams=laparams)
+    else:
         return usage()
 
-      fp = file(fname, 'rb')
-      interpreter = PDFPageInterpreter(rsrcmgr, device)
-      password = ""
-      maxpages = 0
-      caching = True
-      pagenos=set()
-      for page in PDFPage.get_pages(fp, pagenos, maxpages=maxpages, password=password,caching=caching, check_extractable=True):
+    fp = file(fname, 'rb')
+    interpreter = PDFPageInterpreter(rsrcmgr, device)
+    password = ""
+    maxpages = 0
+    caching = True
+    pagenos = set()
+    for page in PDFPage.get_pages(fp, pagenos, maxpages=maxpages, password=password, caching=caching, check_extractable=True):
         interpreter.process_page(page)
-   # process_pdf(rsrcmgr, device, fp, pagenos, maxpages=maxpages, password=password, caching=caching, check_extractable=True)
-      fp.close()
+   # process_pdf(rsrcmgr, device, fp, pagenos, maxpages=maxpages,
+   # password=password, caching=caching, check_extractable=True)
+    fp.close()
 
-      device.close()
-      outfp.close()
-      return
+    device.close()
+    outfp.close()
+    return
+
 
 class Usage(Exception):
-    def __init__(self,msg):
+
+    def __init__(self, msg):
         self.msg = msg
 
+
 def main(argv):
-    #if argv is None:
+    # if argv is None:
      #   argv=sys.argv
     try:
         try:
@@ -246,35 +251,30 @@ def main(argv):
             outputfile = ''
             pathname = 'C:\\scripts\\'
 
-            opts, args = getopt.getopt(argv,"hi:o:",["ifile=","ofile="])
+            opts, args = getopt.getopt(argv, "hi:o:", ["ifile=", "ofile="])
 
             for opt, arg in opts:
-             if opt == '-h':
-              print 'PoliceBlotter.py -i <inputfile> -o <outputfile>'
-              sys.exit()
-             elif opt in ("-i", "--ifile"):
-              inputfile = arg
-             elif opt in ("-o", "--ofile"):
-              outputfile = arg
+                if opt == '-h':
+                    print 'PoliceBlotter.py -i <inputfile> -o <outputfile>'
+                    sys.exit()
+                elif opt in ("-i", "--ifile"):
+                    inputfile = arg
+                elif opt in ("-o", "--ofile"):
+                    outputfile = arg
             print 'Input file is ', inputfile
             print 'Output file is ', outputfile
             ifile = pathname + inputfile
             ofile = pathname + outputfile
-            print 'ifile is ',ifile
-            print 'ofile is ',ofile
-            parsePdf(ifile,ofile)
+            print 'ifile is ', ifile
+            print 'ofile is ', ofile
+            parsePdf(ifile, ofile)
         except getopt.GetoptError:
-         print 'PoliceBlotter.py -i <inputfile> -o <outputfile>'
-         sys.exit(2)
+            print 'PoliceBlotter.py -i <inputfile> -o <outputfile>'
+            sys.exit(2)
     except Usage, err:
-      print >>sys.stderr, err.msg
-      print >>sys.stderr, "for help use --help"
-      return 2
+        print >>sys.stderr, err.msg
+        print >>sys.stderr, "for help use --help"
+        return 2
 
 if __name__ == "__main__":
     sys.exit(main(sys.argv[1:]))
-
-
-
-
-
