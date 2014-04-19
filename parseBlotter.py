@@ -1,3 +1,4 @@
+#!/usr/bin/python
 #-------------------------------------------------------------------------------
 # Name:        Police Blotter
 # Purpose:     Read and convert Pittsburgh Police Blotter pdf to text
