@@ -163,40 +163,48 @@ class TextLineConverter(PDFConverter):
         return
 
 
-def parsePdf(fname):
+def parsePdf(ifilename,ofilename):
 
-    password = ''
-    pagenos = set()
-    maxpages = 0
-    # output option
-    outfile = None
-    outtype = None
+    password   = ''
+    pagenos    = set()
+    maxpages   = 0
+    outtype    = None
     layoutmode = 'normal'
-    codec = 'utf-8'
-    caching = True
-    laparams = LAParams()
+    codec      = 'utf-8'
+    caching    = True
+    laparams   = LAParams()
 
-    rsrcmgr = PDFResourceManager(caching=caching)
+    resourceManager = PDFResourceManager(caching=caching)
+
+    if ofilename:
+        outfile = file(ofilename, 'w')
+    else:
+        outfile = sys.stdout
+        
     if not outtype:
         outtype = 'text'
-
-    if outfile:
-        outfp = file(outfile, 'w')
-    else:
-        outfp = sys.stdout
+        
     if outtype == 'text':
-        device = TextLineConverter(
-            rsrcmgr, outfp, codec=codec, laparams=laparams)
+        device = TextLineConverter(resourceManager, 
+                                   outfile, 
+                                   codec=codec, 
+                                   laparams=laparams)
     else:
         return usage()
 
-    fp = file(fname, 'rb')
-    process_pdf(rsrcmgr, device, fp, pagenos, maxpages=maxpages,
-                password=password, caching=caching, check_extractable=True)
-    fp.close()
+    inputfile = file(ifilename, 'rb')
+    process_pdf(resourceManager, 
+                device, 
+                inputfile, 
+                pagenos, 
+                maxpages=maxpages,
+                password=password, 
+                caching=caching, 
+                check_extractable=True)
+    inputfile.close()
 
     device.close()
-    outfp.close()
+    outfile.close()
     return
 
 
