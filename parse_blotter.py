@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!python
 #-------------------------------------------------------------------------------
 # Name:        Police Blotter
 # Purpose:     Read and convert Pittsburgh Police Blotter pdf to text
@@ -43,7 +43,7 @@ from pdfminer.converter import LTImage
 from pdfminer.layout    import LAParams
 from pdfminer.pdfinterp import PDFResourceManager
 from pdfminer.pdfinterp import PDFPageInterpreter
-from pdfminer.pdfinterp import process_pdf
+from pdfminer.pdfpage   import PDFPage
 
 
 def coroutine(func):
@@ -354,14 +354,18 @@ def parsePdf(ifilename,ofilename):
         return usage()
 
     inputfile = file(ifilename, 'rb')
-    process_pdf(resourceManager, 
-                device, 
-                inputfile, 
-                pagenos, 
-                maxpages=maxpages,
-                password=password, 
-                caching=caching, 
-                check_extractable=True)
+#    process_pdf(resourceManager, 
+#                device, 
+#                inputfile, 
+#                pagenos, 
+#                maxpages=maxpages,
+#                password=password, 
+#                caching=caching, 
+#                check_extractable=True)
+
+    interpreter = PDFPageInterpreter(resourceManager, device) 
+    for page in PDFPage.get_pages(inputfile, pagenos, maxpages=maxpages, password=password,caching=caching, check_extractable=True):
+        print interpreter.process_page(page)
     inputfile.close()
 
     device.close()
