@@ -125,6 +125,7 @@ class BlotterProcessor:
     def processContent(self):
         line = ""
         record = {}
+        storeDataCoro = self.storeData()
 
         while True:
             line = (yield)
@@ -138,23 +139,29 @@ class BlotterProcessor:
                 record[field] = (yield)
 
             elif line in multifield_set:
-                field = line.strip()
-                record[field] = ""
-                data = (yield)
+                field         = line.strip()
+                record[field] = []
+                data          = (yield)
                 while True:
                     data = (yield)
                     if data == "":
                         break
-                    record[field] += "\n\t[" + data + "]"
+                    record[field].append( data )
 
-                if field == "Description":
-                    sys.stdout.write("zone=%s\n" % (self.zone))
-                    sys.stdout.write("date=%s\n" % (self.date))
-                    for key in record:
-                        sys.stdout.write("%s=%s\n" % (key, record[key]))
-                    print
-                    print
+                if field == terminal_field:                   
+                    record['zone'] = self.zone
+                    record['date'] = self.date                    
+                    storeDataCoro.send(record)
                     record = {}
+                    
+    @coroutine
+    def storeData(self):
+        import json
+        while True:
+            record = (yield)
+            print
+            print record
+            print json.dumps(record, sort_keys=True, indent=4, separators=(',', ': '))
 
 
 class TextLineConverter(PDFConverter):
