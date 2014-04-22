@@ -271,7 +271,7 @@ class BlotterProcessor():
             #print record
             sys.stderr.write('.')
             sys.stderr.flush()
-            self.outfile.write( json.dumps(record, sort_keys=True, indent=4, separators=(',', ': ')) + '\n' )
+            self.outfile.write( json.dumps(record, sort_keys=True, indent=4, separators=(',', ': ')) + ',\n' )
             #print "Count: ",count
             count += 1
 
@@ -354,6 +354,8 @@ def parsePdf(ifilename,ofilename):
         return usage()
 
     inputfile = file(ifilename, 'rb')
+
+    outfile.write( '[' ) 
     process_pdf(resourceManager, 
                 device, 
                 inputfile, 
@@ -363,6 +365,7 @@ def parsePdf(ifilename,ofilename):
                 caching=caching, 
                 check_extractable=True)
     inputfile.close()
+    outfile.write( ']' ) 
 
     device.close()
     outfile.close()
@@ -395,7 +398,7 @@ def main(argv=None):
                     
             sys.stderr.write( 'Input file is %s\n'%inputfile   )
             sys.stderr.write( 'Output file is %s\n'%outputfile )          
-                        
+                       
             parsePdf(inputfile,outputfile)
 
         except getopt.error, msg:
