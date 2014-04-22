@@ -1,0 +1,83 @@
+<!DOCTYPE html> 
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta name="viewport" content="initial-scale=1.0, user-scalable=no">
+    <meta charset="utf-8">
+    <title>Simple markers</title>
+    <style>
+      html, body, #map-canvas {
+        height: 100%;
+        margin: 0px;
+        padding: 0px
+      }
+    </style>
+    <script src="//ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js" type="text/javascript"></script>
+    <script src="https://maps.googleapis.com/maps/api/js?v=3.exp&sensor=false"></script>
+    <script>
+function codeAddress(address) {
+  //var address = document.getElementById('address').value;
+  geocoder.geocode( { 'address': address}, function(results, status) {
+    if (status == google.maps.GeocoderStatus.OK) {
+      map.setCenter(results[0].geometry.location);
+      var marker = new google.maps.Marker({
+          map: map,
+          position: results[0].geometry.location
+      });
+    } else {
+      alert('Geocode was not successful for the following reason: ' + status);
+    }
+  });
+}
+
+var geocoder;
+var map;
+
+$(document).ready(function(){
+//function initialize() {
+	  geocoder = new google.maps.Geocoder();
+	  var latlng = new google.maps.LatLng(-34.397, 150.644);
+	  var mapOptions = {
+	    zoom: 8,
+	    center: latlng
+	  }
+	  map = new google.maps.Map(document.getElementById('map-canvas'), mapOptions);
+//}
+	$(':submit').on('click', function() { // This event fires when a button is clicked
+		var button = $(this).val();
+		$.ajax({ // ajax call starts
+			url: 'json_list.json', // JQuery loads serverside.php
+			data: '', // Send value of the clicked button
+			dataType: 'json', // Choosing a JSON datatype
+			success: function(data) // Variable data constains the data we get from serverside
+			{
+				$('#incidents').html(''); // Clear #wines div
+				for (var i in data) {
+					$('#incidents').append('Address: ' + data[i]["Location of Occurrence"] + '</br>');
+					codeAddress( data[i]["Location of Occurrence"] + ", pittsburgh, pa" )
+				}
+			}
+		});
+		return false; // keeps the page from not refreshing 
+	});
+});
+
+
+//google.maps.event.addDomListener(window, 'load', initialize);
+
+    </script>
+  </head>
+
+
+<body>
+	<form method="post" action="">
+		<button value="all" type="submit">Get Incidents!</button>
+	</form>
+	
+        <div id="map-canvas"></div>
+	<div id="incidents">
+	<!-- Javascript will print data in here -->
+	</div>
+
+</body>
+</html>
