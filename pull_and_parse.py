@@ -4,6 +4,7 @@ import os
 import sys
 import getopt
 import parse_blotter
+import geocode_incidents
 import datetime
 from datetime import timedelta
 
@@ -34,6 +35,7 @@ def pull_and_parse(offset,pdf_dir,json_dir):
     
     urllib.urlretrieve(blotter_url, filename=pdf_path)
     parse_blotter.parsePdf(pdf_path,json_path)
+    geocode_incidents.geocode_incidents(json_path,json_path)
 
 
 class Usage(Exception):
