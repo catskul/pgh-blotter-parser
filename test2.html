@@ -34,7 +34,7 @@ var geocoder;
 var map;
 
 $(document).ready(function(){
-//function initialize() {
+    $( "#result" ).load( "/ ul", function() { $( "a" ).click( function(){ alert( this.href ); return false; }) } );
 	  geocoder = new google.maps.Geocoder();
 	  var latlng = new google.maps.LatLng(40.440415,-80.000063);
 	  var mapOptions = {
@@ -42,8 +42,8 @@ $(document).ready(function(){
 	    center: latlng
 	  }
 	  map = new google.maps.Map(document.getElementById('map-canvas'), mapOptions);
-//}
-	$(':submit').on('click', function() { // This event fires when a button is clicked
+	
+    $(':submit').on('click', function() { // This event fires when a button is clicked
 		var button = $(this).val();
 		$.ajax({ // ajax call starts
 			url: 'json_list.json', // JQuery loads serverside.php
@@ -78,6 +78,8 @@ $(document).ready(function(){
 	<div id="incidents">
 	<!-- Javascript will print data in here -->
 	</div>
+    <div id="result" >
+    </div>
 
 </body>
 </html>
