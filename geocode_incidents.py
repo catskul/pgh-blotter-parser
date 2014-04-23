@@ -38,7 +38,7 @@ def geocode_incidents(ifilename,ofilename):
                     'lng'    : lng,
                     'query'  : query
                     }
-                time.sleep(0.5)#delay to avoid maxing out geocode limit
+                time.sleep(0.2)#delay to avoid maxing out geocode limit
                 print( incident['geocode'], file=sys.stderr )
             else:
                 print( "Already geocoded! %s"%incident['geocode']['address'] )
