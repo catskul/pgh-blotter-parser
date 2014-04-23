@@ -271,7 +271,10 @@ class BlotterProcessor():
             #print record
             sys.stderr.write('.')
             sys.stderr.flush()
-            self.outfile.write( json.dumps(record, sort_keys=True, indent=4, separators=(',', ': ')) + ',\n' )
+            if count != 0:
+                self.outfile.write( ",\n" )
+
+            self.outfile.write( json.dumps(record, sort_keys=True, indent=4, separators=(',', ': ')) )
             #print "Count: ",count
             count += 1
 
