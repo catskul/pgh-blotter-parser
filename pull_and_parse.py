@@ -48,7 +48,7 @@ def main(argv=None):
         argv = sys.argv
     try:
         try:
-            opts, args = getopt.getopt(argv[1:], "ad:i:o:", ["--all","--day-offset","--pdf-dir","--json-dir"])
+            opts, args = getopt.getopt(argv[1:], "ad:r:i:o:", ["--all","--day-offset", "--range","--pdf-dir","--json-dir"])
             day_offset = -1
             num_days   =  1
             pdf_dir    = "./pdf"
@@ -62,8 +62,17 @@ def main(argv=None):
                 if opt == '-a':
                     num_days = 7
                     
+                if opt == '-r':
+                    num_days = int(arg)
+
                 if opt == '-d':
-                    day_offset = arg
+                    day_offset = int(arg)
+
+                if opt == '-i':
+                    pdf_dir = arg
+
+                if opt == '-o':
+                    json_dir = arg
 
             sys.stderr.write( 'using offset: %s\n'    %day_offset )
             sys.stderr.write( 'pulling %s days\n'     %num_days   )
