@@ -86,7 +86,6 @@ $(document).ready(function(){
       $( "#file-list" ).load( "/ ul", 
                               function() { 
                                   $( "a" ).click( function(){ 
-                                                      alert( this.href ); 
                                                       retrieve_and_plot(this.href); 
                                                       return false; 
                                                       }
@@ -108,7 +107,7 @@ $(document).ready(function(){
 
 <body>
     
-    <div id="file-list"></div>
+    <div id="file-list" style="float: left; padding-right: 10px;"></div>
     <div id="map-canvas"></div>
 	<div id="incidents"></div>
 
