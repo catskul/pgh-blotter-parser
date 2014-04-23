@@ -7,6 +7,9 @@ import sys
 import getopt
 import time
 
+translations = { "Golden Triangle/CivicArena" : "downtown" }
+
+
 def geocode_incidents(ifilename,ofilename):
 
     geocoder = geopy.geocoders.GoogleV3()
@@ -16,11 +19,19 @@ def geocode_incidents(ifilename,ofilename):
     incident_file          = open( ifilename )
     incidents = json.load( incident_file )
     
-    for incident in incidents:
+    for idx, incident in enumerate( incidents ):
         try:
+            if idx != 0:
+                geocoded_incident_file.write( ",\n" )
+
             if not "geocode" in incident and incident['Location of Occurrence'] != "" :
-                query = incident['Location of Occurrence'] + "," + incident['Neighborhood']
-                address, (lat, lng) = geocoder.geocode(query)
+                neighborhood = incident['Neighborhood']
+
+                if neighborhood in translations:
+                    neighborhood = translations[neighborhood]
+
+                query = incident['Location of Occurrence'] + "," + neighborhood + ", Pittsburgh, PA"
+                address, (lat, lng) = geocoder.geocode(query, exactly_one=False)[0]
                 incident['geocode'] = {
                     'address': address, 
                     'lat'    : lat, 
@@ -29,9 +40,11 @@ def geocode_incidents(ifilename,ofilename):
                     }
                 time.sleep(0.5)#delay to avoid maxing out geocode limit
                 print( incident['geocode'], file=sys.stderr )
-        except TypeError:
-            print( "Type error in geocode of: %s"%incident, file=sys.stderr )
-        geocoded_incident_file.write( str( incident ) )
+            else:
+                print( "Already geocoded! %s"%incident['geocode']['address'] )
+        except (TypeError, geopy.geocoders.googlev3.GQueryError):
+            print( "Error in geocode of: %s"%incident, file=sys.stderr )
+        geocoded_incident_file.write( json.dumps( incident, sort_keys=True, indent=4, separators=(',', ': ')) ) 
    
     incident_file.close()
      
