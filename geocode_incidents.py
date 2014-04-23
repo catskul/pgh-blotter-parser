@@ -42,7 +42,7 @@ def geocode_incidents(ifilename,ofilename):
                 print( incident['geocode'], file=sys.stderr )
             else:
                 print( "Already geocoded! %s"%incident['geocode']['address'] )
-        except (TypeError, geopy.geocoders.googlev3.GQueryError):
+        except (TypeError, geopy.geocoders.googlev3.GeocoderQueryError):
             print( "Error in geocode of: %s"%incident, file=sys.stderr )
         geocoded_incident_file.write( json.dumps( incident, sort_keys=True, indent=4, separators=(',', ': ')) ) 
    
