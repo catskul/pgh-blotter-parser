@@ -26,7 +26,7 @@ def pull_and_parse(offset,pdf_dir,json_dir):
     blotter_url      = "http://www.city.pittsburgh.pa.us/police/blotter/%s"%blotter_filename
 
     #blotter_basename = "blotter_%s_%s"%(yesterday_name,yesterday_str)
-    blotter_basename = "%s"%(yesterday_name,yesterday_str)
+    blotter_basename = "%s"%(yesterday_str)
     pdf_path  = os.path.join( pdf_dir, "%s.pdf"%blotter_basename )
     json_path = os.path.join( json_dir, "%s.json"%blotter_basename )
 
