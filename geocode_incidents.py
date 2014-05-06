@@ -7,7 +7,8 @@ import sys
 import getopt
 import time
 
-translations = { "Golden Triangle/CivicArena" : "downtown" }
+translations = { "Golden Triangle/CivicArena" : "downtown" ,
+                 "Golden Triangle/Civic"      : "downtown" }
 
 
 def geocode_incidents(ifilename,ofilename):
