@@ -49,30 +49,30 @@ def main(argv=None):
         argv = sys.argv
     try:
         try:
-            opts, args = getopt.getopt(argv[1:], "ad:r:i:o:", ["--all","--day-offset", "--range","--pdf-dir","--json-dir"])
+            opts, args = getopt.getopt(argv[1:], "had:r:i:o:", ["help","all","day-offset=", "range=","pdf-dir=","json-dir="])
             day_offset = -1
             num_days   =  1
             pdf_dir    = "./pdf"
             json_dir   = "./json"
                    
             for opt, arg in opts:
-                if opt == '-h':
-                    sys.stderr.writeline( '%s [--day-offset offset from today=%s] [--all] [--pdf-dir=%s] [--json-dir=%s]'%(argv[0],day_offset,pdf_dir,json_dir) )
+                if opt in ('-h', '--help'):
+                    sys.stderr.write( '%s [--day-offset(offset from today)=%s] [--all] [--pdf-dir=%s] [--json-dir=%s]\n'%(argv[0],day_offset,pdf_dir,json_dir) )
                     sys.exit()
                     
-                if opt == '-a':
+                if opt in ('-a', '--all'):
                     num_days = 7
                     
-                if opt == '-r':
+                if opt in ('-r', '--range'):
                     num_days = int(arg)
 
-                if opt == '-d':
+                if opt in ('-d', '--day-offset'):
                     day_offset = int(arg)
 
-                if opt == '-i':
+                if opt in ('-i', '--pdf-dir'):
                     pdf_dir = arg
 
-                if opt == '-o':
+                if opt in ('-o', '--json-dir'):
                     json_dir = arg
 
             sys.stderr.write( 'using offset: %s\n'    %day_offset )
