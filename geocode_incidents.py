@@ -40,7 +40,7 @@ def geocode_incidents(ifilename,ofilename):
                     'query'  : query
                     }
                 time.sleep(0.2)#delay to avoid maxing out geocode limit
-                print( incident['geocode'], file=sys.stderr )
+                #print( incident['geocode'], file=sys.stderr )
             else:
                 print( "Already geocoded! %s"%incident['geocode']['address'] )
         except (TypeError, geopy.geocoders.googlev3.GeocoderQueryError):
