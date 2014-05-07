@@ -94,7 +94,7 @@ def main(argv=None):
             raise Usage(msg)
 
     except Usage, err:
-        sys.stderr.write( err.msg + '\n' )
+        sys.stderr.write( "error: %s\n"%(err.msg) )
         sys.stderr.write( "for help use --help\n" )
         return 2
 
