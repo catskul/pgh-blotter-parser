@@ -22,8 +22,9 @@ def pull_and_parse(offset,pdf_dir,json_dir):
     yesterday_name = yesterday.strftime('%A').lower()
     yesterday_str  = yesterday.strftime("%Y%m%d")
 
-    blotter_filename = "blotter_%s.pdf"%yesterday_name
-    blotter_url      = "http://www.city.pittsburgh.pa.us/police/blotter/%s"%blotter_filename
+    blotter_filename = "arrest_blotter_%s.pdf"%yesterday_name
+    #blotter_url      = "http://www.city.pittsburgh.pa.us/police/blotter/%s"%blotter_filename
+    blotter_url      = "http://apps.pittsburghpa.gov/police/arrest_blotter/%s"%blotter_filename
 
     #blotter_basename = "blotter_%s_%s"%(yesterday_name,yesterday_str)
     blotter_basename = "%s"%(yesterday_str)
@@ -32,7 +33,8 @@ def pull_and_parse(offset,pdf_dir,json_dir):
 
     sys.stderr.write( '\n' )
     sys.stderr.write( "Downloading: [%s]\n"%blotter_url )
-    sys.stderr.write( "...to [%s]\n"%json_path )
+    sys.stderr.write( "...to [%s]\n"%pdf_path )
+    sys.stderr.write( "and converting into to [%s]\n"%json_path )
     
     urllib.urlretrieve(blotter_url, filename=pdf_path)
     parse_blotter.parsePdf(pdf_path,json_path)
