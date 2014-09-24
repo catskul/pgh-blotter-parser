@@ -7,7 +7,8 @@ import sys
 import getopt
 import time
 
-translations = { "Golden Triangle/CivicArena" : "downtown" }
+translations = { "Golden Triangle/CivicArena" : "downtown" ,
+                 "Golden Triangle/Civic"      : "downtown" }
 
 
 def geocode_incidents(ifilename,ofilename):
@@ -38,11 +39,11 @@ def geocode_incidents(ifilename,ofilename):
                     'lng'    : lng,
                     'query'  : query
                     }
-                time.sleep(0.5)#delay to avoid maxing out geocode limit
-                print( incident['geocode'], file=sys.stderr )
+                time.sleep(0.2)#delay to avoid maxing out geocode limit
+                #print( incident['geocode'], file=sys.stderr )
             else:
                 print( "Already geocoded! %s"%incident['geocode']['address'] )
-        except (TypeError, geopy.geocoders.googlev3.GQueryError):
+        except (TypeError, geopy.geocoders.googlev3.GeocoderQueryError):
             print( "Error in geocode of: %s"%incident, file=sys.stderr )
         geocoded_incident_file.write( json.dumps( incident, sort_keys=True, indent=4, separators=(',', ': ')) ) 
    

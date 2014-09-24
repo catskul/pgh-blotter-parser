@@ -22,16 +22,19 @@ def pull_and_parse(offset,pdf_dir,json_dir):
     yesterday_name = yesterday.strftime('%A').lower()
     yesterday_str  = yesterday.strftime("%Y%m%d")
 
-    blotter_filename = "blotter_%s.pdf"%yesterday_name
-    blotter_url      = "http://www.city.pittsburgh.pa.us/police/blotter/%s"%blotter_filename
+    blotter_filename = "arrest_blotter_%s.pdf"%yesterday_name
+    #blotter_url      = "http://www.city.pittsburgh.pa.us/police/blotter/%s"%blotter_filename
+    blotter_url      = "http://apps.pittsburghpa.gov/police/arrest_blotter/%s"%blotter_filename
 
-    blotter_basename = "blotter_%s_%s"%(yesterday_name,yesterday_str)
+    #blotter_basename = "blotter_%s_%s"%(yesterday_name,yesterday_str)
+    blotter_basename = "%s"%(yesterday_str)
     pdf_path  = os.path.join( pdf_dir, "%s.pdf"%blotter_basename )
     json_path = os.path.join( json_dir, "%s.json"%blotter_basename )
 
     sys.stderr.write( '\n' )
     sys.stderr.write( "Downloading: [%s]\n"%blotter_url )
-    sys.stderr.write( "...to [%s]\n"%json_path )
+    sys.stderr.write( "...to [%s]\n"%pdf_path )
+    sys.stderr.write( "and converting into to [%s]\n"%json_path )
     
     urllib.urlretrieve(blotter_url, filename=pdf_path)
     parse_blotter.parsePdf(pdf_path,json_path)
@@ -48,22 +51,31 @@ def main(argv=None):
         argv = sys.argv
     try:
         try:
-            opts, args = getopt.getopt(argv[1:], "ad:i:o:", ["--all","--day-offset","--pdf-dir","--json-dir"])
+            opts, args = getopt.getopt(argv[1:], "had:r:i:o:", ["help","all","day-offset=", "range=","pdf-dir=","json-dir="])
             day_offset = -1
             num_days   =  1
             pdf_dir    = "./pdf"
             json_dir   = "./json"
                    
             for opt, arg in opts:
-                if opt == '-h':
-                    sys.stderr.writeline( '%s [--day-offset offset from today=%s] [--all] [--pdf-dir=%s] [--json-dir=%s]'%(argv[0],day_offset,pdf_dir,json_dir) )
+                if opt in ('-h', '--help'):
+                    sys.stderr.write( '%s [--day-offset(offset from today)=%s] [--all] [--pdf-dir=%s] [--json-dir=%s]\n'%(argv[0],day_offset,pdf_dir,json_dir) )
                     sys.exit()
                     
-                if opt == '-a':
+                if opt in ('-a', '--all'):
                     num_days = 7
                     
-                if opt == '-d':
-                    day_offset = arg
+                if opt in ('-r', '--range'):
+                    num_days = int(arg)
+
+                if opt in ('-d', '--day-offset'):
+                    day_offset = int(arg)
+
+                if opt in ('-i', '--pdf-dir'):
+                    pdf_dir = arg
+
+                if opt in ('-o', '--json-dir'):
+                    json_dir = arg
 
             sys.stderr.write( 'using offset: %s\n'    %day_offset )
             sys.stderr.write( 'pulling %s days\n'     %num_days   )
@@ -84,7 +96,7 @@ def main(argv=None):
             raise Usage(msg)
 
     except Usage, err:
-        sys.stderr.write( err.msg + '\n' )
+        sys.stderr.write( "error: %s\n"%(err.msg) )
         sys.stderr.write( "for help use --help\n" )
         return 2
 
